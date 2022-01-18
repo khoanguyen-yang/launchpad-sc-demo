@@ -1,0 +1,110 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "proxy",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "implementation",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "factory",
+        "type": "address"
+      }
+    ],
+    "name": "TokenSaleCreated",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_tokenSaleImplementation",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "_name",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "_admin",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_hardcap",
+        "type": "uint256"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "startTime",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "endTime",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct TokenSale.TimeFrame",
+        "name": "_whitelistSaleTimeFrame",
+        "type": "tuple"
+      },
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "startTime",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "endTime",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct TokenSale.TimeFrame",
+        "name": "_publicSaleTimeFrame",
+        "type": "tuple"
+      },
+      {
+        "internalType": "uint256[]",
+        "name": "_purchaseLevels",
+        "type": "uint256[]"
+      },
+      {
+        "internalType": "uint8",
+        "name": "_publicSalePurchaseLevel",
+        "type": "uint8"
+      },
+      {
+        "internalType": "address",
+        "name": "_purchaseTokenAddress",
+        "type": "address"
+      }
+    ],
+    "name": "createTokenSale",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
