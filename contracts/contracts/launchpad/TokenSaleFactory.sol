@@ -20,7 +20,7 @@ contract TokenSaleFactory {
     TokenSale.TimeFrame calldata _whitelistSaleTimeFrame,
     TokenSale.TimeFrame calldata _publicSaleTimeFrame,
     uint256[] calldata _purchaseLevels,
-    uint8 _publicSalePurchaseLevel,
+    uint256 _publicSalePurchaseCap,
     address _purchaseToken
   ) public returns (address) {
     address proxy = Clones.clone(_tokenSaleImplementation);
@@ -32,7 +32,7 @@ contract TokenSaleFactory {
       _whitelistSaleTimeFrame,
       _publicSaleTimeFrame,
       _purchaseLevels,
-      _publicSalePurchaseLevel,
+      _publicSalePurchaseCap,
       _purchaseToken
     );
 

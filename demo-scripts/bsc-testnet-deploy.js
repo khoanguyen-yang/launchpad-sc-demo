@@ -3,8 +3,8 @@ const ethers = require("ethers");
 const tokenSaleFactoryAbi = require("./token-sale-factory.json");
 const tokenSaleAbi = require("./token-sale.json");
 
-const tokenSaleFactoryAddress = "0x966A21645510FCf56A432BBf31d0c91bb3f82081";
-const tokenSaleAddress = "0xeb7B81446549A89f9AB1c2e159d80b9E4b5f4187";
+const tokenSaleFactoryAddress = "0x353BB779F7cFC7D9f4A181606c5B3aD31DF73F2A";
+const tokenSaleAddress = "0x0fc64327E65c942fd8fa0A6Cb74bd6BA980D8253";
 
 const rpc = "https://data-seed-prebsc-1-s1.binance.org:8545";
 const deployerPrivateKey = "";
@@ -25,7 +25,7 @@ const now = Math.floor(Date.now() / 1000);
 const oneHour = 3600;
 const busdAddress = "0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee";
 
-const whitelistSale = false;
+const whitelistSale = true;
 
 (async () => {
   const tx = await tokenSaleFactoryContract.createTokenSale(
@@ -56,7 +56,7 @@ const whitelistSale = false;
       ethers.BigNumber.from("20000000000000000"),
       ethers.BigNumber.from("30000000000000000"),
     ],
-    1,
+    ethers.BigNumber.from("20000000000000000"),
     busdAddress
   );
 
@@ -74,7 +74,7 @@ const whitelistSale = false;
 
   await tokenSaleContract.registerInvestors(
     ["0x813b96D5c78060e529238caAd3459B977608A97a"],
-    [0]
+    [2]
   );
   console.log("Registered investor!");
 })();

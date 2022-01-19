@@ -42,11 +42,11 @@ const busdAddress = "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc";
       endTime: now + oneHour * 3,
     },
     [
-      ethers.BigNumber.from("100000000000000000"),
-      ethers.BigNumber.from("300000000000000000"),
-      ethers.BigNumber.from("500000000000000000"),
+      ethers.BigNumber.from("10000000000000000"),
+      ethers.BigNumber.from("20000000000000000"),
+      ethers.BigNumber.from("30000000000000000"),
     ],
-    0,
+    ethers.BigNumber.from("10000000000000000"),
     busdAddress
   );
 

@@ -15,7 +15,7 @@ const investorSigner = new ethers.Wallet(investorPrivateKey, provider);
 const busdAddress = "0xed24fc36d5ee211ea25a80239fb8c4cfd80f12ee";
 const busdContract = new ethers.Contract(busdAddress, busdAbi, investorSigner);
 
-const tokenSaleProxy = "0xe7336236DF271648d5315124E4be34DE320A32d4";
+const tokenSaleProxy = "0x213BD3b73eB49567F20A78A32C324cdFf985755D";
 
 const buyAmount = "1" + "0000000000000000"; // 16 zeros
 
@@ -34,14 +34,14 @@ const buyAmount = "1" + "0000000000000000"; // 16 zeros
   // console.log("Approved");
 
   // Purchase whitelist sale
-  // await tokenSaleContract.purchaseTokenWhitelistSale(
-  //   ethers.BigNumber.from(buyAmount)
-  // );
-  // console.log("Purchased whitelist sale successfully!");
-
-  // Purchase public sale
-  await tokenSaleContract.purchaseTokenPublicSale(
+  await tokenSaleContract.purchaseTokenWhitelistSale(
     ethers.BigNumber.from(buyAmount)
   );
-  console.log("Purchased public sale successfully!");
+  console.log("Purchased whitelist sale successfully!");
+
+  // Purchase public sale
+  // await tokenSaleContract.purchaseTokenPublicSale(
+  //   ethers.BigNumber.from(buyAmount)
+  // );
+  // console.log("Purchased public sale successfully!");
 })();

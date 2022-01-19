@@ -158,13 +158,13 @@
         "type": "uint256[]"
       },
       {
-        "internalType": "uint8",
-        "name": "_publicSalePurchaseLevel",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "_publicSalePurchaseCap",
+        "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_purchaseTokenAddress",
+        "name": "_purchaseToken",
         "type": "address"
       },
       {
@@ -267,13 +267,13 @@
         "type": "uint256[]"
       },
       {
-        "internalType": "uint8",
-        "name": "_publicSalePurchaseLevel",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "_publicSalePurchaseCap",
+        "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "_purchaseTokenAddress",
+        "name": "_purchaseToken",
         "type": "address"
       }
     ],
@@ -335,6 +335,16 @@
         "type": "uint256"
       },
       {
+        "internalType": "uint256",
+        "name": "whitelistSaleTotalInvestment",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicSaleTotalInvestment",
+        "type": "uint256"
+      },
+      {
         "internalType": "uint8",
         "name": "whitelistPurchaseLevel",
         "type": "uint8"
@@ -363,6 +373,19 @@
   },
   {
     "inputs": [],
+    "name": "nextRefundIdx",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "owner",
     "outputs": [
       {
@@ -376,12 +399,12 @@
   },
   {
     "inputs": [],
-    "name": "publicSalePurchaseLevel",
+    "name": "publicSalePurchaseCap",
     "outputs": [
       {
-        "internalType": "uint8",
+        "internalType": "uint256",
         "name": "",
-        "type": "uint8"
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -429,19 +452,6 @@
     "name": "purchaseToken",
     "outputs": [
       {
-        "internalType": "contract IERC20",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "purchaseTokenAddress",
-    "outputs": [
-      {
         "internalType": "address",
         "name": "",
         "type": "address"
@@ -477,6 +487,32 @@
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "refundAll",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "refunded",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address[]",
@@ -490,13 +526,7 @@
       }
     ],
     "name": "registerInvestors",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
+    "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
   },
@@ -579,9 +609,9 @@
         "type": "uint256[]"
       },
       {
-        "internalType": "uint8",
-        "name": "publicSalePurchaseLevel_",
-        "type": "uint8"
+        "internalType": "uint256",
+        "name": "publicSalePurchaseCap_",
+        "type": "uint256"
       },
       {
         "internalType": "address",

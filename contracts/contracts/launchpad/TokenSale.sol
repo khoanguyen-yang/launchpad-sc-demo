@@ -43,11 +43,11 @@ contract TokenSale is Initializable, Ownable {
   // Public sale time frame
   TimeFrame public publicSaleTimeFrame;
 
-  // Purchase levels
+  // Purchase levels. Level indices start from 0, so index 0 will be level 1 and so on
   uint256[] public purchaseLevels;
 
-  // Public sale max level. Level starts from 1
-  uint8 public publicSalePurchaseLevel;
+  // Public sale purchase cap
+  uint256 public publicSalePurchaseCap;
 
   // The token address used to purchase, e.g. USDT, BUSD, etc.
   address public purchaseToken;
@@ -81,8 +81,10 @@ contract TokenSale is Initializable, Ownable {
   struct Investor {
     address investor;
     uint256 totalInvestment;
+    uint256 whitelistSaleTotalInvestment;
+    uint256 publicSaleTotalInvestment;
     uint8 whitelistPurchaseLevel; // Level starts from 1
-    bool whitelistSale; // If true, can ONLY participate whitelist sale. Otherwise, can only participate public sale
+    bool whitelistSale; // If true, can participate whitelist sale
   }
 
   // Mapping investor wallet address to investor instance
@@ -133,12 +135,12 @@ contract TokenSale is Initializable, Ownable {
     TimeFrame calldata _whitelistSaleTimeFrame,
     TimeFrame calldata _publicSaleTimeFrame,
     uint256[] calldata _purchaseLevels,
-    uint8 _publicSalePurchaseLevel,
+    uint256 _publicSalePurchaseCap,
     address _purchaseToken
   ) public initializer {
     require(_admin != address(0), "TokenSale: admin address is zero");
 
-    require(_hardcap != 0, "TokenSale: hardcap is zero");
+    require(_hardcap > 0, "TokenSale: hardcap is zero");
 
     require(
       _whitelistSaleTimeFrame.startTime != 0 &&
@@ -150,16 +152,14 @@ contract TokenSale is Initializable, Ownable {
     require(
       _publicSaleTimeFrame.startTime != 0 &&
         _publicSaleTimeFrame.endTime != 0 &&
+        _whitelistSaleTimeFrame.endTime <= _publicSaleTimeFrame.startTime &&
         _publicSaleTimeFrame.startTime < _publicSaleTimeFrame.endTime,
       "TokenSale: invalid public sale time frame"
     );
 
     require(_purchaseLevels.length != 0, "TokenSale: empty purchase levels");
 
-    require(
-      _publicSalePurchaseLevel <= _purchaseLevels.length,
-      "TokenSale: invalid public sale max level"
-    );
+    require(_publicSalePurchaseCap > 0, "TokenSale: public sale cap is zero");
 
     require(
       _purchaseToken != address(0),
@@ -172,7 +172,7 @@ contract TokenSale is Initializable, Ownable {
     whitelistSaleTimeFrame = _whitelistSaleTimeFrame;
     publicSaleTimeFrame = _publicSaleTimeFrame;
     purchaseLevels = _purchaseLevels;
-    publicSalePurchaseLevel = _publicSalePurchaseLevel;
+    publicSalePurchaseCap = _publicSalePurchaseCap;
     purchaseToken = _purchaseToken;
     purchaseToken_ = IERC20(purchaseToken);
 
@@ -194,11 +194,11 @@ contract TokenSale is Initializable, Ownable {
     TimeFrame calldata _whitelistSaleTimeFrame,
     TimeFrame calldata _publicSaleTimeFrame,
     uint256[] calldata _purchaseLevels,
-    uint8 _publicSalePurchaseLevel,
+    uint256 _publicSalePurchaseCap,
     address _purchaseToken,
     uint256 _status
   ) external onlyOwner {
-    require(_hardcap != 0, "TokenSale: hardcap is zero");
+    require(_hardcap > 0, "TokenSale: hardcap is zero");
 
     require(
       _whitelistSaleTimeFrame.startTime != 0 &&
@@ -210,16 +210,14 @@ contract TokenSale is Initializable, Ownable {
     require(
       _publicSaleTimeFrame.startTime != 0 &&
         _publicSaleTimeFrame.endTime != 0 &&
+        _whitelistSaleTimeFrame.endTime <= _publicSaleTimeFrame.startTime &&
         _publicSaleTimeFrame.startTime < _publicSaleTimeFrame.endTime,
       "TokenSale: invalid public sale time frame"
     );
 
     require(_purchaseLevels.length != 0, "TokenSale: empty purchase levels");
 
-    require(
-      _publicSalePurchaseLevel <= _purchaseLevels.length,
-      "TokenSale: invalid public sale max level"
-    );
+    require(_publicSalePurchaseCap > 0, "TokenSale: public sale cap is zero");
 
     require(
       _purchaseToken != address(0),
@@ -235,7 +233,7 @@ contract TokenSale is Initializable, Ownable {
     whitelistSaleTimeFrame = _whitelistSaleTimeFrame;
     publicSaleTimeFrame = _publicSaleTimeFrame;
     purchaseLevels = _purchaseLevels;
-    publicSalePurchaseLevel = _publicSalePurchaseLevel;
+    publicSalePurchaseCap = _publicSalePurchaseCap;
     purchaseToken = _purchaseToken;
     purchaseToken_ = IERC20(purchaseToken);
     status = Status(_status);
@@ -252,7 +250,7 @@ contract TokenSale is Initializable, Ownable {
       TimeFrame memory whitelistSaleTimeFrame_,
       TimeFrame memory publicSaleTimeFrame_,
       uint256[] memory purchaseLevels_,
-      uint8 publicSalePurchaseLevel_,
+      uint256 publicSalePurchaseCap_,
       address purchaseTokenAddress_,
       Status status_,
       uint256 totalSaleAmount_,
@@ -267,7 +265,7 @@ contract TokenSale is Initializable, Ownable {
       whitelistSaleTimeFrame,
       publicSaleTimeFrame,
       purchaseLevels,
-      publicSalePurchaseLevel,
+      publicSalePurchaseCap,
       purchaseToken,
       status,
       totalSaleAmount,
@@ -309,12 +307,16 @@ contract TokenSale is Initializable, Ownable {
         investors[_investors[i]] = Investor(
           _investors[i],
           0,
+          0,
+          0,
           _whitelistPurchaseLevels[i],
           true
         );
       } else {
         investors[_investors[i]] = Investor(
           _investors[i],
+          0,
+          0,
           0,
           _whitelistPurchaseLevels[i],
           false
@@ -358,7 +360,7 @@ contract TokenSale is Initializable, Ownable {
     );
 
     require(
-      investor.totalInvestment < purchaseCap,
+      investor.whitelistSaleTotalInvestment < purchaseCap,
       "TokenSale: exceed maximum investment"
     );
 
@@ -368,13 +370,18 @@ contract TokenSale is Initializable, Ownable {
       investmentAmount = hardcap.sub(totalSaleAmount);
     }
 
-    if (investmentAmount > purchaseCap.sub(investor.totalInvestment)) {
-      investmentAmount = purchaseCap.sub(investor.totalInvestment);
+    if (
+      investmentAmount > purchaseCap.sub(investor.whitelistSaleTotalInvestment)
+    ) {
+      investmentAmount = purchaseCap.sub(investor.whitelistSaleTotalInvestment);
     }
 
     totalSaleAmount = totalSaleAmount.add(investmentAmount);
     totalWhitelistSaleAmount = totalWhitelistSaleAmount.add(investmentAmount);
     investor.totalInvestment = investor.totalInvestment.add(investmentAmount);
+    investor.whitelistSaleTotalInvestment = investor
+      .whitelistSaleTotalInvestment
+      .add(investmentAmount);
 
     if (totalSaleAmount >= hardcap) {
       hardcapReached = true;
@@ -402,24 +409,9 @@ contract TokenSale is Initializable, Ownable {
     );
 
     Investor storage investor = investors[msg.sender];
-    uint256 purchaseCap = purchaseLevels[publicSalePurchaseLevel - 1];
 
     require(
-      !investor.whitelistSale,
-      "TokenSale: not eligible to participate in public sale"
-    );
-
-    require(
-      TokenSaleValidation.validPurchaseAmount(
-        purchaseLevels,
-        publicSalePurchaseLevel - 1,
-        amount
-      ),
-      "TokenSale: invalid purchase amount"
-    );
-
-    require(
-      investor.totalInvestment < purchaseCap,
+      investor.publicSaleTotalInvestment < publicSalePurchaseCap,
       "TokenSale: exceed maximum investment"
     );
 
@@ -429,13 +421,21 @@ contract TokenSale is Initializable, Ownable {
       investmentAmount = hardcap.sub(totalSaleAmount);
     }
 
-    if (investmentAmount > purchaseCap.sub(investor.totalInvestment)) {
-      investmentAmount = purchaseCap.sub(investor.totalInvestment);
+    if (
+      investmentAmount >
+      publicSalePurchaseCap.sub(investor.publicSaleTotalInvestment)
+    ) {
+      investmentAmount = publicSalePurchaseCap.sub(
+        investor.publicSaleTotalInvestment
+      );
     }
 
     totalSaleAmount = totalSaleAmount.add(investmentAmount);
     totalPublicSaleAmount = totalPublicSaleAmount.add(investmentAmount);
     investor.totalInvestment = investor.totalInvestment.add(investmentAmount);
+    investor.publicSaleTotalInvestment = investor.publicSaleTotalInvestment.add(
+      investmentAmount
+    );
 
     if (totalSaleAmount >= hardcap) {
       hardcapReached = true;
@@ -493,13 +493,9 @@ contract TokenSale is Initializable, Ownable {
     Investor storage investor = investors[_oldAddress];
     investor.investor = address(0);
 
-    // Clone old investor data to new one
-    investors[_newAddress] = Investor(
-      _newAddress,
-      0,
-      investor.whitelistPurchaseLevel,
-      false
-    );
+    // Clone old investor data to new one & update new wallet address
+    investors[_newAddress] = investor;
+    investors[_newAddress].investor = _newAddress;
 
     // Update investor addresses to replace old with new one
     for (uint256 i; i < investorAddresses.length; ++i) {
