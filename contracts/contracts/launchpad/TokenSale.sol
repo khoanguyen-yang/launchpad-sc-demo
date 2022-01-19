@@ -519,10 +519,13 @@ contract TokenSale is Initializable, Ownable {
       nextRefundIdx++;
       if (!refunded[investorAddresses[i]]) {
         refunded[investorAddresses[i]] = true;
-        purchaseToken_.safeTransfer(
-          investorAddresses[i],
-          investors[investorAddresses[i]].totalInvestment
-        );
+
+        uint256 totalInvestment = investors[investorAddresses[i]]
+          .totalInvestment;
+
+        if (totalInvestment != 0) {
+          purchaseToken_.safeTransfer(investorAddresses[i], totalInvestment);
+        }
       }
     }
   }
