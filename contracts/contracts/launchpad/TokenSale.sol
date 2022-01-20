@@ -146,7 +146,7 @@ contract TokenSale is Initializable, Ownable {
       _whitelistSaleTimeFrame.startTime != 0 &&
         _whitelistSaleTimeFrame.endTime != 0 &&
         _whitelistSaleTimeFrame.startTime < _whitelistSaleTimeFrame.endTime,
-      "TokenSale: invalid whitelist time frame"
+      "TokenSale: invalid whitelist sale time frame"
     );
 
     require(
@@ -204,7 +204,7 @@ contract TokenSale is Initializable, Ownable {
       _whitelistSaleTimeFrame.startTime != 0 &&
         _whitelistSaleTimeFrame.endTime != 0 &&
         _whitelistSaleTimeFrame.startTime < _whitelistSaleTimeFrame.endTime,
-      "TokenSale: invalid whitelist time frame"
+      "TokenSale: invalid whitelist sale time frame"
     );
 
     require(

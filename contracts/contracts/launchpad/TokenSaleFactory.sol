@@ -23,6 +23,11 @@ contract TokenSaleFactory {
     uint256 _publicSalePurchaseCap,
     address _purchaseToken
   ) public returns (address) {
+    require(
+      _tokenSaleImplementation != address(0),
+      "TokenSaleFactory: implementation address is zero"
+    );
+
     address proxy = Clones.clone(_tokenSaleImplementation);
     TokenSale(proxy).initialize(
       msg.sender,
