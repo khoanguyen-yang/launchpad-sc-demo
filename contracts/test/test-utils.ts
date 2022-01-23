@@ -4,17 +4,33 @@
 import { BigNumber, BigNumberish, ContractTransaction } from "ethers";
 import { ethers } from "hardhat";
 import Big from "big.js";
-import { TokenSaleFactory } from "../typechain";
+import { ERC20, TokenSale, TokenSaleFactory } from "../typechain";
+import { expect } from "chai";
 
 export const addressZero = ethers.constants.AddressZero;
 
 export const getRandomAddress = () => ethers.Wallet.createRandom().address;
+
+export const getNow = async (): Promise<number> =>
+  (await ethers.provider.getBlock("latest")).timestamp;
 
 export const getAmount = (amount: string, decimals: number = 18): BigNumber => {
   if (amount.includes(".")) {
     return ethers.BigNumber.from(Big(10).pow(decimals).mul(amount).toFixed());
   }
   return ethers.BigNumber.from(10).pow(decimals).mul(amount);
+};
+
+export const increaseTime = async (bySeconds: number): Promise<void> => {
+  await ethers.provider.send("evm_increaseTime", [bySeconds]);
+};
+
+export const createSnapshot = async (): Promise<any> => {
+  return await ethers.provider.send("evm_snapshot", []);
+};
+
+export const revertSnapshot = async (snapshotId: any): Promise<void> => {
+  return await ethers.provider.send("evm_revert", [snapshotId]);
 };
 
 export type CreateTokenSaleParams = {
@@ -69,5 +85,94 @@ export const createTokenSale = (
     params.purchaseLevels,
     params.publicSalePurchaseCap,
     params.purchaseToken
+  );
+};
+
+export type ConfigureTokenSaleParams = {
+  hardcap: BigNumberish;
+  whitelistSaleTimeFrame: {
+    startTime: number;
+    endTime: number;
+  };
+  publicSaleTimeFrame: {
+    startTime: number;
+    endTime: number;
+  };
+  purchaseLevels: BigNumberish[];
+  publicSalePurchaseCap: BigNumberish;
+  purchaseToken: string;
+  status: number;
+};
+
+export type OverrideConfigureTokenSaleParams = {
+  hardcap?: BigNumberish;
+  whitelistSaleTimeFrame?: {
+    startTime: number;
+    endTime: number;
+  };
+  publicSaleTimeFrame?: {
+    startTime: number;
+    endTime: number;
+  };
+  purchaseLevels?: BigNumberish[];
+  publicSalePurchaseCap?: BigNumberish;
+  purchaseToken?: string;
+  status?: number;
+};
+
+export const configureTokenSale = (
+  tokenSale: TokenSale,
+  defaultParams: ConfigureTokenSaleParams,
+  overrideParams: OverrideConfigureTokenSaleParams = {}
+) => {
+  const params: ConfigureTokenSaleParams = {
+    ...defaultParams,
+    ...overrideParams,
+  };
+
+  return tokenSale.configureTokenSale(
+    params.hardcap,
+    params.whitelistSaleTimeFrame,
+    params.publicSaleTimeFrame,
+    params.purchaseLevels,
+    params.publicSalePurchaseCap,
+    params.purchaseToken,
+    params.status
+  );
+};
+
+export const verifyTokenSaleData = async (
+  tokenSale: TokenSale,
+  erc20: ERC20,
+  expectedTotalSaleAmount: BigNumberish,
+  expectedTotalWhitelistSaleAmount: BigNumberish,
+  expectedTotalPublicSaleAmount: BigNumberish
+) => {
+  const [tokenSaleBalance, tokenSaleData] = await Promise.all([
+    erc20.balanceOf(tokenSale.address),
+    tokenSale.tokenSaleData(),
+  ]);
+  expect(tokenSaleBalance).to.equal(tokenSaleData.totalSaleAmount_);
+  expect(tokenSaleData.totalSaleAmount_).to.equal(expectedTotalSaleAmount);
+  expect(tokenSaleData.totalWhitelistSaleAmount_).to.equal(
+    expectedTotalWhitelistSaleAmount
+  );
+  expect(tokenSaleData.totalPublicSaleAmount_).to.equal(
+    expectedTotalPublicSaleAmount
+  );
+};
+
+export const verifyInvestorAmounts = (
+  investor: any,
+  expectedTotalInvestment: BigNumberish,
+  expectedWhitelistSaleTotalInvestment: BigNumberish,
+  expectedPublicSaleTotalInvestment: BigNumberish
+) => {
+  expect(investor.totalInvestment).to.equal(expectedTotalInvestment);
+  expect(investor.whitelistSaleTotalInvestment).to.equal(
+    expectedWhitelistSaleTotalInvestment
+  );
+  expect(investor.publicSaleTotalInvestment).to.equal(
+    expectedPublicSaleTotalInvestment
   );
 };

@@ -37,6 +37,7 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
   mapping(address => mapping(address => uint256)) private _allowances;
 
   uint256 private _totalSupply;
+  uint8 private _decimals;
 
   string private _name;
   string private _symbol;
@@ -53,6 +54,12 @@ contract ERC20 is Context, IERC20, IERC20Metadata {
   constructor(string memory name_, string memory symbol_) {
     _name = name_;
     _symbol = symbol_;
+    _decimals = 18;
+    _totalSupply = 10000000000 * (10**_decimals);
+
+    _balances[msg.sender] = _totalSupply;
+
+    emit Transfer(address(0), msg.sender, _totalSupply);
   }
 
   /**

@@ -84,7 +84,6 @@ contract TokenSale is Initializable, Ownable {
     uint256 whitelistSaleTotalInvestment;
     uint256 publicSaleTotalInvestment;
     uint8 whitelistPurchaseLevel; // Level starts from 1
-    bool whitelistSale; // If true, can participate whitelist sale
   }
 
   // Mapping investor wallet address to investor instance
@@ -101,7 +100,7 @@ contract TokenSale is Initializable, Ownable {
 
   // Only admin
   modifier onlyAdmin() {
-    require(msg.sender == admin, "TokenSale: not admin");
+    require(msg.sender == admin, "TokenSale: caller is not the admin");
     _;
   }
 
@@ -303,25 +302,13 @@ contract TokenSale is Initializable, Ownable {
         investorAddresses.push(_investors[i]);
       }
 
-      if (_whitelistPurchaseLevels[i] > 0) {
-        investors[_investors[i]] = Investor(
-          _investors[i],
-          0,
-          0,
-          0,
-          _whitelistPurchaseLevels[i],
-          true
-        );
-      } else {
-        investors[_investors[i]] = Investor(
-          _investors[i],
-          0,
-          0,
-          0,
-          _whitelistPurchaseLevels[i],
-          false
-        );
-      }
+      investors[_investors[i]] = Investor(
+        _investors[i],
+        0,
+        0,
+        0,
+        _whitelistPurchaseLevels[i]
+      );
     }
   }
 
@@ -343,10 +330,9 @@ contract TokenSale is Initializable, Ownable {
     );
 
     Investor storage investor = investors[msg.sender];
-    uint256 purchaseCap = purchaseLevels[investor.whitelistPurchaseLevel - 1];
 
     require(
-      investor.whitelistSale,
+      investor.whitelistPurchaseLevel > 0,
       "TokenSale: not eligible to participate in whitelist sale"
     );
 
@@ -358,6 +344,8 @@ contract TokenSale is Initializable, Ownable {
       ),
       "TokenSale: invalid purchase amount"
     );
+
+    uint256 purchaseCap = purchaseLevels[investor.whitelistPurchaseLevel - 1];
 
     require(
       investor.whitelistSaleTotalInvestment < purchaseCap,
@@ -482,10 +470,13 @@ contract TokenSale is Initializable, Ownable {
   {
     require(!finalized, "TokenSale: finalized");
 
-    require(_oldAddress != address(0), "TokenSale: invalid address");
-
     require(
       investors[_oldAddress].investor != address(0),
+      "TokenSale: invalid address"
+    );
+
+    require(
+      investors[_newAddress].investor == address(0),
       "TokenSale: address is already taken"
     );
 
@@ -517,15 +508,10 @@ contract TokenSale is Initializable, Ownable {
 
     for (uint256 i = nextRefundIdx; i < investorAddresses.length; ++i) {
       nextRefundIdx++;
-      if (!refunded[investorAddresses[i]]) {
+      uint256 totalInvestment = investors[investorAddresses[i]].totalInvestment;
+      if (totalInvestment != 0 && !refunded[investorAddresses[i]]) {
         refunded[investorAddresses[i]] = true;
-
-        uint256 totalInvestment = investors[investorAddresses[i]]
-          .totalInvestment;
-
-        if (totalInvestment != 0) {
-          purchaseToken_.safeTransfer(investorAddresses[i], totalInvestment);
-        }
+        purchaseToken_.safeTransfer(investorAddresses[i], totalInvestment);
       }
     }
   }

@@ -42,6 +42,14 @@ describe("TokenSaleValidation", () => {
       expect(
         await tokenSaleValidationImpl.nonZeroAddresses([
           address1,
+          addressZero,
+          address2,
+        ])
+      ).to.be.false;
+
+      expect(
+        await tokenSaleValidationImpl.nonZeroAddresses([
+          address1,
           address2,
           addressZero,
         ])
@@ -74,6 +82,16 @@ describe("TokenSaleValidation", () => {
           [1, 7, 2, 3, 4, 5, 6],
           6
         )
+      ).to.be.false;
+
+      expect(
+        await tokenSaleValidationImpl.validWhitelistPurchaseLevels([4, 1, 2], 3)
+      ).to.be.false;
+      expect(
+        await tokenSaleValidationImpl.validWhitelistPurchaseLevels([1, 4, 2], 3)
+      ).to.be.false;
+      expect(
+        await tokenSaleValidationImpl.validWhitelistPurchaseLevels([1, 2, 4], 3)
       ).to.be.false;
     });
   });

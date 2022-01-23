@@ -10,6 +10,7 @@ import {
   createTokenSale,
   CreateTokenSaleParams,
   getAmount,
+  getNow,
 } from "../test-utils";
 
 describe("TokenSaleFactory", () => {
@@ -38,7 +39,7 @@ describe("TokenSaleFactory", () => {
     erc20 = await erc20_.deploy("Test", "TEST");
     await erc20.deployed();
 
-    const now = Math.floor(Date.now() / 1000);
+    const now = await getNow();
 
     tokenSaleParams = {
       tokenSaleImplementationAddress: tokenSale.address,
@@ -65,7 +66,7 @@ describe("TokenSaleFactory", () => {
     };
   });
 
-  describe("createTokenSale", () => {
+  describe("createTokenSale (and initialize of TokenSale)", () => {
     it("should be able to create token sale", async () => {
       const tx = await createTokenSale(tokenSaleFactory, tokenSaleParams);
       await tx.wait();
@@ -213,9 +214,12 @@ describe("TokenSaleFactory", () => {
   });
 
   describe("interact with created token sale contract", () => {
+    let owner: SignerWithAddress;
     let tokenSaleProxyAddress: string;
 
     beforeEach(async () => {
+      [owner] = await ethers.getSigners();
+
       const tx = await createTokenSale(tokenSaleFactory, tokenSaleParams);
       const txReceipt = await tx.wait();
       const tokenSaleCreatedEvent = txReceipt.events?.find(
@@ -254,6 +258,8 @@ describe("TokenSaleFactory", () => {
       expect(tokenSaleData.totalSaleAmount_).not.to.be.undefined;
       expect(tokenSaleData.totalWhitelistSaleAmount_).not.to.be.undefined;
       expect(tokenSaleData.totalPublicSaleAmount_).not.to.be.undefined;
+
+      expect(await tokenSale.owner()).to.equal(owner.address);
     });
   });
 });
