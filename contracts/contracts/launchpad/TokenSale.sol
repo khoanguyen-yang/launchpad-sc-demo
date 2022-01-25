@@ -473,14 +473,14 @@ contract TokenSale is Initializable, Ownable {
 
     require(
       investors[_oldAddress].investor != address(0),
-      "TokenSale: invalid address"
+      "TokenSale: invalid old address"
     );
 
     require(_newAddress != address(0), "TokenSale: new address is zero");
 
     require(
       investors[_newAddress].investor == address(0),
-      "TokenSale: address is already taken"
+      "TokenSale: new address is already taken"
     );
 
     // Change old mapping to have address(0), i.e. not whitelisted

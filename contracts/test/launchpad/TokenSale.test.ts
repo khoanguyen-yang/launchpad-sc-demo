@@ -1335,12 +1335,12 @@ describe("TokenSale", () => {
         tokenSale
           .connect(admin)
           .changeInvestorWalletAddress(signer2.address, signer3.address)
-      ).to.be.revertedWith("TokenSale: invalid address");
+      ).to.be.revertedWith("TokenSale: invalid old address");
       expect(
         tokenSale
           .connect(admin)
           .changeInvestorWalletAddress(addressZero, signer3.address)
-      ).to.be.revertedWith("TokenSale: invalid address");
+      ).to.be.revertedWith("TokenSale: invalid old address");
     });
 
     it("should revert if new address is already taken", async () => {
@@ -1349,7 +1349,15 @@ describe("TokenSale", () => {
         tokenSale
           .connect(admin)
           .changeInvestorWalletAddress(signer1.address, signer2.address)
-      ).to.be.revertedWith("TokenSale: address is already taken");
+      ).to.be.revertedWith("TokenSale: new address is already taken");
+    });
+
+    it("should revert if new address is zero", async () => {
+      expect(
+        tokenSale
+          .connect(admin)
+          .changeInvestorWalletAddress(signer1.address, addressZero)
+      ).to.be.revertedWith("TokenSale: new address is zero");
     });
 
     it("should revert if call is not admin", async () => {
