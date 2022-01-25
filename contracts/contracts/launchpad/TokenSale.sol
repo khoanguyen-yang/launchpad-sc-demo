@@ -446,6 +446,7 @@ contract TokenSale is Initializable, Ownable {
     require(!finalized, "TokenSale: finalized");
 
     finalized = true;
+    status = Status.INACTIVE;
 
     uint256 balance = purchaseToken_.balanceOf(address(this));
     purchaseToken_.safeTransfer(admin, balance);
