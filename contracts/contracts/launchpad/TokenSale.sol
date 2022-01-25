@@ -476,6 +476,8 @@ contract TokenSale is Initializable, Ownable {
       "TokenSale: invalid address"
     );
 
+    require(_newAddress != address(0), "TokenSale: new address is zero");
+
     require(
       investors[_newAddress].investor == address(0),
       "TokenSale: address is already taken"
