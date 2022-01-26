@@ -136,7 +136,6 @@ export const configureTokenSale = (
     params.publicSaleTimeFrame,
     params.purchaseLevels,
     params.publicSalePurchaseCap,
-    params.purchaseToken,
     params.status
   );
 };

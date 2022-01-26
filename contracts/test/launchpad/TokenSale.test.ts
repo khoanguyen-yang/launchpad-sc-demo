@@ -182,18 +182,6 @@ describe("TokenSale", () => {
       );
     });
 
-    it("should be able to configure purchase token", async () => {
-      const newPurchaseToken = getRandomAddress();
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          purchaseToken: newPurchaseToken,
-        })
-      ).wait();
-      expect((await tokenSale.tokenSaleData()).purchaseTokenAddress_).to.equal(
-        newPurchaseToken
-      );
-    });
-
     it("should be able to configure status", async () => {
       await (
         await configureTokenSale(tokenSale, configureTokenSaleParams, {
@@ -331,13 +319,6 @@ describe("TokenSale", () => {
           publicSalePurchaseCap: 0,
         })
       ).to.be.revertedWith("TokenSale: public sale cap is zero");
-
-      // Purchase token address is zero
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          purchaseToken: addressZero,
-        })
-      ).to.be.revertedWith("TokenSale: purchase token address is zero");
 
       // Invalid status
       expect(

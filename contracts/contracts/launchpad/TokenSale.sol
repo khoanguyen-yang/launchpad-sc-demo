@@ -194,7 +194,6 @@ contract TokenSale is Initializable, Ownable {
     TimeFrame calldata _publicSaleTimeFrame,
     uint256[] calldata _purchaseLevels,
     uint256 _publicSalePurchaseCap,
-    address _purchaseToken,
     uint256 _status
   ) external onlyOwner {
     require(_hardcap > 0, "TokenSale: hardcap is zero");
@@ -219,11 +218,6 @@ contract TokenSale is Initializable, Ownable {
     require(_publicSalePurchaseCap > 0, "TokenSale: public sale cap is zero");
 
     require(
-      _purchaseToken != address(0),
-      "TokenSale: purchase token address is zero"
-    );
-
-    require(
       _status == uint256(Status.INACTIVE) || _status == uint256(Status.ACTIVE),
       "TokenSale: invalid status"
     );
@@ -233,8 +227,6 @@ contract TokenSale is Initializable, Ownable {
     publicSaleTimeFrame = _publicSaleTimeFrame;
     purchaseLevels = _purchaseLevels;
     publicSalePurchaseCap = _publicSalePurchaseCap;
-    purchaseToken = _purchaseToken;
-    purchaseToken_ = IERC20(purchaseToken);
     status = Status(_status);
   }
 
