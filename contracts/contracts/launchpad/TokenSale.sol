@@ -116,11 +116,11 @@ contract TokenSale is Initializable, Ownable {
     _;
   }
 
-  // Check if investor is whitelisted
-  modifier whitelisted() {
+  // Check if investor is registered
+  modifier registered() {
     require(
       investors[msg.sender].investor != address(0),
-      "TokenSale: not whitelisted"
+      "TokenSale: not registered"
     );
     _;
   }
@@ -238,41 +238,6 @@ contract TokenSale is Initializable, Ownable {
     status = Status(_status);
   }
 
-  /// @notice Query token sale data
-  function tokenSaleData()
-    external
-    view
-    returns (
-      string memory name_,
-      address admin_,
-      uint256 hardcap_,
-      TimeFrame memory whitelistSaleTimeFrame_,
-      TimeFrame memory publicSaleTimeFrame_,
-      uint256[] memory purchaseLevels_,
-      uint256 publicSalePurchaseCap_,
-      address purchaseTokenAddress_,
-      Status status_,
-      uint256 totalSaleAmount_,
-      uint256 totalWhitelistSaleAmount_,
-      uint256 totalPublicSaleAmount_
-    )
-  {
-    return (
-      name,
-      admin,
-      hardcap,
-      whitelistSaleTimeFrame,
-      publicSaleTimeFrame,
-      purchaseLevels,
-      publicSalePurchaseCap,
-      purchaseToken,
-      status,
-      totalSaleAmount,
-      totalWhitelistSaleAmount,
-      totalPublicSaleAmount
-    );
-  }
-
   /// @notice Register (whitelist) investors
   /// @dev New data will override old ones if existed
   function registerInvestors(
@@ -321,7 +286,7 @@ contract TokenSale is Initializable, Ownable {
     external
     activeTokenSale
     availableForPurchase
-    whitelisted
+    registered
   {
     require(
       block.timestamp >= whitelistSaleTimeFrame.startTime &&
@@ -388,7 +353,7 @@ contract TokenSale is Initializable, Ownable {
     external
     activeTokenSale
     availableForPurchase
-    whitelisted
+    registered
   {
     require(
       block.timestamp >= publicSaleTimeFrame.startTime &&
@@ -483,7 +448,7 @@ contract TokenSale is Initializable, Ownable {
       "TokenSale: new address is already taken"
     );
 
-    // Change old mapping to have address(0), i.e. not whitelisted
+    // Change old mapping to have address(0), i.e. not registered
     Investor storage investor = investors[_oldAddress];
     investor.investor = address(0);
 
@@ -517,5 +482,40 @@ contract TokenSale is Initializable, Ownable {
         purchaseToken_.safeTransfer(investorAddresses[i], totalInvestment);
       }
     }
+  }
+
+  /// @notice Query token sale data
+  function tokenSaleData()
+    external
+    view
+    returns (
+      string memory name_,
+      address admin_,
+      uint256 hardcap_,
+      TimeFrame memory whitelistSaleTimeFrame_,
+      TimeFrame memory publicSaleTimeFrame_,
+      uint256[] memory purchaseLevels_,
+      uint256 publicSalePurchaseCap_,
+      address purchaseTokenAddress_,
+      Status status_,
+      uint256 totalSaleAmount_,
+      uint256 totalWhitelistSaleAmount_,
+      uint256 totalPublicSaleAmount_
+    )
+  {
+    return (
+      name,
+      admin,
+      hardcap,
+      whitelistSaleTimeFrame,
+      publicSaleTimeFrame,
+      purchaseLevels,
+      publicSalePurchaseCap,
+      purchaseToken,
+      status,
+      totalSaleAmount,
+      totalWhitelistSaleAmount,
+      totalPublicSaleAmount
+    );
   }
 }

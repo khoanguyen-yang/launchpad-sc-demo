@@ -3,8 +3,8 @@ const ethers = require("ethers");
 const tokenSaleFactoryAbi = require("./token-sale-factory.json");
 const tokenSaleAbi = require("./token-sale.json");
 
-const tokenSaleFactoryAddress = "0x353BB779F7cFC7D9f4A181606c5B3aD31DF73F2A";
-const tokenSaleAddress = "0x0fc64327E65c942fd8fa0A6Cb74bd6BA980D8253";
+const tokenSaleFactoryAddress = "0x50Be3890b3157E72A9B7cDEF35989bD8C6F9D018";
+const tokenSaleAddress = "0x2E8457265de1ab9628feB54686848117D0AE3699";
 
 const rpc = "https://data-seed-prebsc-1-s1.binance.org:8545";
 const deployerPrivateKey = "";

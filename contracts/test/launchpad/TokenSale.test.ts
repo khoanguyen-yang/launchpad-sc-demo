@@ -658,10 +658,10 @@ describe("TokenSale", () => {
       ).to.be.revertedWith("TokenSale: sold out");
     });
 
-    it("should revert if investor is not whitelisted", async () => {
+    it("should revert if investor is not registered", async () => {
       expect(
         tokenSale.connect(signer4).purchaseTokenWhitelistSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not whitelisted");
+      ).to.be.revertedWith("TokenSale: not registered");
     });
 
     it("should revert if not within time frame", async () => {
@@ -948,10 +948,10 @@ describe("TokenSale", () => {
       ).to.be.revertedWith("TokenSale: sold out");
     });
 
-    it("should revert if investor is not whitelisted", async () => {
+    it("should revert if investor is not registered", async () => {
       expect(
         tokenSale.connect(signer4).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not whitelisted");
+      ).to.be.revertedWith("TokenSale: not registered");
     });
 
     it("should revert if not within time frame", async () => {
