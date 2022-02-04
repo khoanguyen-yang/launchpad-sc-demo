@@ -50,10 +50,6 @@ describe("TokenSaleFactory", () => {
         startTime: now,
         endTime: now + 3600 * 1,
       },
-      publicSaleTimeFrame: {
-        startTime: now + 3600 * 2,
-        endTime: now + 3600 * 3,
-      },
       purchaseLevels: [
         getAmount("5"),
         getAmount("10"),
@@ -61,7 +57,6 @@ describe("TokenSaleFactory", () => {
         getAmount("20"),
         getAmount("25"),
       ],
-      publicSalePurchaseCap: getAmount("10"),
       purchaseToken: erc20.address,
     };
   });
@@ -150,59 +145,12 @@ describe("TokenSaleFactory", () => {
         })
       ).to.be.revertedWith("TokenSale: invalid whitelist sale time frame");
 
-      // Public sale start time is 0
-      expect(
-        createTokenSale(tokenSaleFactory, tokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: 0,
-            endTime: tokenSaleParams.publicSaleTimeFrame.endTime,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Public sale end time is 0
-      expect(
-        createTokenSale(tokenSaleFactory, tokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: tokenSaleParams.publicSaleTimeFrame.startTime,
-            endTime: 0,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Both public sale start and end are 0
-      expect(
-        createTokenSale(tokenSaleFactory, tokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: 0,
-            endTime: 0,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Public sale start time > end time
-      expect(
-        createTokenSale(tokenSaleFactory, tokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: tokenSaleParams.publicSaleTimeFrame.endTime,
-            endTime: tokenSaleParams.publicSaleTimeFrame.startTime,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
       // Empty purchase level
       expect(
         createTokenSale(tokenSaleFactory, tokenSaleParams, {
           purchaseLevels: [],
         })
       ).to.be.revertedWith("TokenSale: empty purchase levels");
-
-      // Public sale purchase cap is zero
-      expect(
-        createTokenSale(tokenSaleFactory, tokenSaleParams, {
-          publicSalePurchaseCap: 0,
-        })
-      ).to.be.revertedWith("TokenSale: public sale cap is zero");
 
       // Purchase token address is zero
       expect(
@@ -242,22 +190,11 @@ describe("TokenSaleFactory", () => {
       expect(tokenSaleData.whitelistSaleTimeFrame_.endTime).to.equal(
         tokenSaleParams.whitelistSaleTimeFrame.endTime.toString()
       );
-      expect(tokenSaleData.publicSaleTimeFrame_.startTime).to.equal(
-        tokenSaleParams.publicSaleTimeFrame.startTime.toString()
-      );
-      expect(tokenSaleData.publicSaleTimeFrame_.endTime).to.equal(
-        tokenSaleParams.publicSaleTimeFrame.endTime.toString()
-      );
       expect(tokenSaleData.purchaseLevels_).to.deep.equal(
         tokenSaleParams.purchaseLevels
       );
-      expect(tokenSaleData.publicSalePurchaseCap_.toString()).to.equal(
-        tokenSaleParams.publicSalePurchaseCap.toString()
-      );
       expect(tokenSaleData.status_).not.to.be.undefined;
       expect(tokenSaleData.totalSaleAmount_).not.to.be.undefined;
-      expect(tokenSaleData.totalWhitelistSaleAmount_).not.to.be.undefined;
-      expect(tokenSaleData.totalPublicSaleAmount_).not.to.be.undefined;
 
       expect(await tokenSale.owner()).to.equal(owner.address);
     });

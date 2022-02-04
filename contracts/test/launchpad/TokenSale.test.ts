@@ -60,10 +60,6 @@ describe("TokenSale", () => {
         startTime: now,
         endTime: now + 3600 * 1,
       },
-      publicSaleTimeFrame: {
-        startTime: now + 3600 * 2,
-        endTime: now + 3600 * 3,
-      },
       purchaseLevels: [
         getAmount("5"),
         getAmount("10"),
@@ -71,7 +67,6 @@ describe("TokenSale", () => {
         getAmount("20"),
         getAmount("25"),
       ],
-      publicSalePurchaseCap: getAmount("10"),
       purchaseToken: erc20.address,
       status: 1,
     };
@@ -82,9 +77,7 @@ describe("TokenSale", () => {
       admin.address,
       configureTokenSaleParams.hardcap,
       configureTokenSaleParams.whitelistSaleTimeFrame,
-      configureTokenSaleParams.publicSaleTimeFrame,
       configureTokenSaleParams.purchaseLevels,
-      configureTokenSaleParams.publicSalePurchaseCap,
       configureTokenSaleParams.purchaseToken
     );
     const txReceipt = await tx.wait();
@@ -103,9 +96,7 @@ describe("TokenSale", () => {
           admin.address,
           configureTokenSaleParams.hardcap,
           configureTokenSaleParams.whitelistSaleTimeFrame,
-          configureTokenSaleParams.publicSaleTimeFrame,
           configureTokenSaleParams.purchaseLevels,
-          configureTokenSaleParams.publicSalePurchaseCap,
           configureTokenSaleParams.purchaseToken
         )
       ).to.be.revertedWith("Initializable: contract is already initialized");
@@ -128,14 +119,9 @@ describe("TokenSale", () => {
         startTime: (await getNow()) + 3600 * 10,
         endTime: (await getNow()) + 3600 * 11,
       };
-      const newPublicSaleTimeFrame = {
-        startTime: (await getNow()) + 3600 * 12,
-        endTime: (await getNow()) + 3600 * 13,
-      };
       await (
         await configureTokenSale(tokenSale, configureTokenSaleParams, {
           whitelistSaleTimeFrame: newWhitelistSaleTimeFrame,
-          publicSaleTimeFrame: newPublicSaleTimeFrame,
         })
       ).wait();
 
@@ -145,12 +131,6 @@ describe("TokenSale", () => {
       );
       expect(tokenSaleData.whitelistSaleTimeFrame_.endTime).to.equal(
         newWhitelistSaleTimeFrame.endTime.toString()
-      );
-      expect(tokenSaleData.publicSaleTimeFrame_.startTime).to.equal(
-        newPublicSaleTimeFrame.startTime.toString()
-      );
-      expect(tokenSaleData.publicSaleTimeFrame_.endTime).to.equal(
-        newPublicSaleTimeFrame.endTime.toString()
       );
     });
 
@@ -167,18 +147,6 @@ describe("TokenSale", () => {
       ).wait();
       expect((await tokenSale.tokenSaleData()).purchaseLevels_).to.deep.equal(
         newPurchaseLevels
-      );
-    });
-
-    it("should be able to configure public sale purchase cap", async () => {
-      const newPublicSalePurchaseCap = getAmount("10");
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSalePurchaseCap: newPublicSalePurchaseCap,
-        })
-      ).wait();
-      expect((await tokenSale.tokenSaleData()).publicSalePurchaseCap_).to.equal(
-        newPublicSalePurchaseCap
       );
     });
 
@@ -251,74 +219,12 @@ describe("TokenSale", () => {
         })
       ).to.be.revertedWith("TokenSale: invalid whitelist sale time frame");
 
-      // Public sale start time is 0
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: 0,
-            endTime: configureTokenSaleParams.publicSaleTimeFrame.endTime,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Public sale end time is 0
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: configureTokenSaleParams.publicSaleTimeFrame.startTime,
-            endTime: 0,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Both public sale start and end are 0
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: 0,
-            endTime: 0,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Public sale start time > end time
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSaleTimeFrame: {
-            startTime: configureTokenSaleParams.publicSaleTimeFrame.endTime,
-            endTime: configureTokenSaleParams.publicSaleTimeFrame.startTime,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
-      // Public sale start time > end time
-      const now = await getNow();
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          whitelistSaleTimeFrame: {
-            startTime: now + 3600 * 3,
-            endTime: now + 3600 * 4,
-          },
-          publicSaleTimeFrame: {
-            startTime: now + 3600 * 1,
-            endTime: now + 3600 * 2,
-          },
-        })
-      ).to.be.revertedWith("TokenSale: invalid public sale time frame");
-
       // Empty purchase level
       expect(
         configureTokenSale(tokenSale, configureTokenSaleParams, {
           purchaseLevels: [],
         })
       ).to.be.revertedWith("TokenSale: empty purchase levels");
-
-      // Public sale purchase cap is zero
-      expect(
-        configureTokenSale(tokenSale, configureTokenSaleParams, {
-          publicSalePurchaseCap: 0,
-        })
-      ).to.be.revertedWith("TokenSale: public sale cap is zero");
 
       // Invalid status
       expect(
@@ -353,7 +259,7 @@ describe("TokenSale", () => {
         getRandomAddress(),
         getRandomAddress(),
       ];
-      const whitelistPurchaseLevels = [1, 0, 3];
+      const whitelistPurchaseLevels = [1, 2, 3];
       await (
         await tokenSale.registerInvestors(investors, whitelistPurchaseLevels)
       ).wait();
@@ -387,14 +293,14 @@ describe("TokenSale", () => {
 
     it("should override old data when register investor", async () => {
       const investor = getRandomAddress();
-      await (await tokenSale.registerInvestors([investor], [0])).wait();
+      await (await tokenSale.registerInvestors([investor], [1])).wait();
 
       const investorBefore = await tokenSale.investors(investor);
-      expect(investorBefore.whitelistPurchaseLevel).to.equal(0);
+      expect(investorBefore.whitelistPurchaseLevel).to.equal(1);
 
-      await (await tokenSale.registerInvestors([investor], [1])).wait();
+      await (await tokenSale.registerInvestors([investor], [2])).wait();
       const investorAfter = await tokenSale.investors(investor);
-      expect(investorAfter.whitelistPurchaseLevel).to.equal(1);
+      expect(investorAfter.whitelistPurchaseLevel).to.equal(2);
 
       expect(await tokenSale.investorCount()).to.equal(1);
     });
@@ -402,19 +308,27 @@ describe("TokenSale", () => {
     it("should revert if params are incorrect", async () => {
       // Lengths do not match
       expect(
-        tokenSale.registerInvestors([getRandomAddress()], [0, 1])
+        tokenSale.registerInvestors([getRandomAddress()], [1, 2])
       ).to.be.revertedWith("TokenSale: lengths do not match");
 
       // Investor address is zero
       expect(
-        tokenSale.registerInvestors([getRandomAddress(), addressZero], [0, 1])
+        tokenSale.registerInvestors([getRandomAddress(), addressZero], [1, 2])
       ).to.be.revertedWith("TokenSale: investor address is zero");
 
-      // Invalid ưhitelist purchase level
+      // Invalid ưhitelist purchase level (exceed max level)
       expect(
         tokenSale.registerInvestors(
           [getRandomAddress(), getRandomAddress(), getRandomAddress()],
           [6, 1, 2]
+        )
+      ).to.be.revertedWith("TokenSale: invalid whitelist purchase level");
+
+      // Invalid ưhitelist purchase level (level is zero)
+      expect(
+        tokenSale.registerInvestors(
+          [getRandomAddress(), getRandomAddress(), getRandomAddress()],
+          [0, 1, 2]
         )
       ).to.be.revertedWith("TokenSale: invalid whitelist purchase level");
     });
@@ -440,8 +354,8 @@ describe("TokenSale", () => {
         (await erc20.transfer(signer2.address, balanceEach)).wait(),
         (await configureTokenSale(tokenSale, configureTokenSaleParams)).wait(),
         await tokenSale.registerInvestors(
-          [signer1.address, signer2.address, signer3.address],
-          [3, 1, 0]
+          [signer1.address, signer2.address],
+          [3, 1]
         ),
       ]);
     });
@@ -467,22 +381,10 @@ describe("TokenSale", () => {
       await verifyTokenSaleData(
         tokenSale,
         erc20,
-        signer1PurchaseAmount.add(signer2PurchaseAmount),
-        signer1PurchaseAmount.add(signer2PurchaseAmount),
-        0
+        signer1PurchaseAmount.add(signer2PurchaseAmount)
       );
-      verifyInvestorAmounts(
-        investor1Record,
-        signer1PurchaseAmount,
-        signer1PurchaseAmount,
-        0
-      );
-      verifyInvestorAmounts(
-        investor2Record,
-        signer2PurchaseAmount,
-        signer2PurchaseAmount,
-        0
-      );
+      verifyInvestorAmounts(investor1Record, signer1PurchaseAmount);
+      verifyInvestorAmounts(investor2Record, signer2PurchaseAmount);
     });
 
     it("should be able to purchase multiple times until reach max cap", async () => {
@@ -502,8 +404,8 @@ describe("TokenSale", () => {
       ]);
       const totalAmount = getAmount("5").add(getAmount("10"));
 
-      await verifyTokenSaleData(tokenSale, erc20, totalAmount, totalAmount, 0);
-      verifyInvestorAmounts(investorRecord, totalAmount, totalAmount, 0);
+      await verifyTokenSaleData(tokenSale, erc20, totalAmount);
+      verifyInvestorAmounts(investorRecord, totalAmount);
 
       expect(
         tokenSale.connect(signer1).purchaseTokenWhitelistSale(getAmount("5"))
@@ -528,14 +430,8 @@ describe("TokenSale", () => {
       ]);
       const expectedAmount = getAmount("5");
 
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        expectedAmount,
-        0
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, expectedAmount, 0);
+      await verifyTokenSaleData(tokenSale, erc20, expectedAmount);
+      verifyInvestorAmounts(investorRecord, expectedAmount);
     });
 
     it("should be able to buy remaining of personal cap", async () => {
@@ -555,14 +451,8 @@ describe("TokenSale", () => {
       ]);
       const expectedAmount = getAmount("15");
 
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        expectedAmount,
-        0
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, expectedAmount, 0);
+      await verifyTokenSaleData(tokenSale, erc20, expectedAmount);
+      verifyInvestorAmounts(investorRecord, expectedAmount);
     });
 
     it("should be able to buy remaining of the combination of personal and hard caps", async () => {
@@ -591,14 +481,8 @@ describe("TokenSale", () => {
       ]);
       const expectedAmount = getAmount("10");
 
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        expectedAmount,
-        0
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, expectedAmount, 0);
+      await verifyTokenSaleData(tokenSale, erc20, expectedAmount);
+      verifyInvestorAmounts(investorRecord, expectedAmount);
     });
 
     it("should emit event on successful purchase", async () => {
@@ -673,14 +557,6 @@ describe("TokenSale", () => {
       ).to.be.revertedWith("TokenSale: not in whitelist sale time");
     });
 
-    it("should revert if investor can only participate public sale", async () => {
-      expect(
-        tokenSale.connect(signer3).purchaseTokenWhitelistSale(getAmount("5"))
-      ).to.be.revertedWith(
-        "TokenSale: not eligible to participate in whitelist sale"
-      );
-    });
-
     it("should revert if purchase amount is invalid", async () => {
       expect(
         tokenSale.connect(signer1).purchaseTokenWhitelistSale(getAmount("0"))
@@ -709,347 +585,11 @@ describe("TokenSale", () => {
     });
   });
 
-  describe("purchaseTokenPublicSale", () => {
-    beforeEach(async () => {
-      const balanceEach = (await erc20.balanceOf(owner.address)).div(2);
-      await Promise.all([
-        (
-          await erc20.connect(signer1).approve(tokenSale.address, balanceEach)
-        ).wait(),
-        (await erc20.transfer(signer1.address, balanceEach)).wait(),
-        (
-          await erc20.connect(signer2).approve(tokenSale.address, balanceEach)
-        ).wait(),
-        (await erc20.transfer(signer2.address, balanceEach)).wait(),
-        (await configureTokenSale(tokenSale, configureTokenSaleParams)).wait(),
-        await tokenSale.registerInvestors(
-          [signer1.address, signer2.address],
-          [0, 1]
-        ),
-      ]);
-      await increaseTime(
-        configureTokenSaleParams.publicSaleTimeFrame.startTime -
-          configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
-          1
-      );
-    });
-
-    it("should be able to purchase (public-sale-only investor)", async () => {
-      const signer1PurchaseAmount = getAmount("10");
-
-      await Promise.all([
-        tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(signer1PurchaseAmount),
-      ]);
-
-      const [investor1Record] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        signer1PurchaseAmount,
-        0,
-        signer1PurchaseAmount
-      );
-      verifyInvestorAmounts(
-        investor1Record,
-        signer1PurchaseAmount,
-        0,
-        signer1PurchaseAmount
-      );
-    });
-
-    it("should be able to purchase (whitelist sale investor)", async () => {
-      const signer2PurchaseAmount = getAmount("10");
-
-      await Promise.all([
-        tokenSale
-          .connect(signer2)
-          .purchaseTokenPublicSale(signer2PurchaseAmount),
-      ]);
-
-      const [investor1Record] = await Promise.all([
-        tokenSale.investors(signer2.address),
-      ]);
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        signer2PurchaseAmount,
-        0,
-        signer2PurchaseAmount
-      );
-      verifyInvestorAmounts(
-        investor1Record,
-        signer2PurchaseAmount,
-        0,
-        signer2PurchaseAmount
-      );
-    });
-
-    it("should be able to buy remaining of hardcap", async () => {
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          hardcap: getAmount("5"),
-        })
-      ).wait();
-
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(getAmount("10"))
-      ).wait();
-
-      const [investorRecord] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-      const expectedAmount = getAmount("5");
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        0,
-        expectedAmount
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, 0, expectedAmount);
-    });
-
-    it("should be able to buy remaining of personal cap (public sale cap)", async () => {
-      await (
-        await tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).wait();
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(getAmount("15"))
-      ).wait();
-
-      const [investorRecord] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-      const expectedAmount = getAmount("10");
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        0,
-        expectedAmount
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, 0, expectedAmount);
-    });
-
-    it("should be able to buy remaining of the combination of personal (public sale) and hard caps", async () => {
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          hardcap: getAmount("10"),
-        })
-      ).wait();
-      await (
-        await tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).wait();
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(getAmount("10"))
-      ).wait();
-
-      const [investorRecord] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-      const expectedAmount = getAmount("10");
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        expectedAmount,
-        0,
-        expectedAmount
-      );
-      verifyInvestorAmounts(investorRecord, expectedAmount, 0, expectedAmount);
-    });
-
-    it("should be able to purchase multiple times until reach max cap", async () => {
-      await (
-        await tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).wait();
-      await (
-        await tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).wait();
-
-      const [investorRecord] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-      const totalAmount = getAmount("5").add(getAmount("5"));
-
-      await verifyTokenSaleData(tokenSale, erc20, totalAmount, 0, totalAmount);
-      verifyInvestorAmounts(investorRecord, totalAmount, 0, totalAmount);
-
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: exceed maximum investment");
-    });
-
-    it("should emit event on successful purchase", async () => {
-      expect(tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5")))
-        .to.emit(tokenSale, "NewInvestment")
-        .withArgs(signer1.address, getAmount("5"));
-    });
-
-    it("should revert if token sale is not active", async () => {
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          status: 0,
-        })
-      ).wait();
-
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: inactive");
-    });
-
-    it("should revert if hardcap is reached", async () => {
-      await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams, {
-          hardcap: getAmount("10"),
-        })
-      ).wait();
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(getAmount("10"))
-      ).wait();
-
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: sold out");
-    });
-
-    it("should revert if investor is not registered", async () => {
-      expect(
-        tokenSale.connect(signer4).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not registered");
-    });
-
-    it("should revert if not within time frame", async () => {
-      await increaseTime(3600 * 2);
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not in public sale time");
-    });
-  });
-
-  describe("purchaseTokenWhitelistSale then purchaseTokenPublicSale", () => {
-    beforeEach(async () => {
-      const balanceEach = (await erc20.balanceOf(owner.address)).div(2);
-      await Promise.all([
-        (
-          await erc20.connect(signer1).approve(tokenSale.address, balanceEach)
-        ).wait(),
-        (await erc20.transfer(signer1.address, balanceEach)).wait(),
-        (
-          await erc20.connect(signer2).approve(tokenSale.address, balanceEach)
-        ).wait(),
-        (await erc20.transfer(signer2.address, balanceEach)).wait(),
-        (await configureTokenSale(tokenSale, configureTokenSaleParams)).wait(),
-        await tokenSale.registerInvestors(
-          [signer1.address, signer2.address, signer3.address],
-          [3, 1, 0]
-        ),
-      ]);
-    });
-
-    it("should be able to purchase whitelist then purchase public", async () => {
-      // Whitelist sale (only signer1 buys)
-      const signer1PurchaseAmount = getAmount("5");
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenWhitelistSale(signer1PurchaseAmount)
-      ).wait();
-
-      const [investor1Record] = await Promise.all([
-        tokenSale.investors(signer1.address),
-      ]);
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        signer1PurchaseAmount,
-        signer1PurchaseAmount,
-        0
-      );
-      verifyInvestorAmounts(
-        investor1Record,
-        signer1PurchaseAmount,
-        signer1PurchaseAmount,
-        0
-      );
-
-      // Skip to public sale
-      await increaseTime(
-        configureTokenSaleParams.publicSaleTimeFrame.startTime -
-          configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
-          1
-      );
-
-      // Public sale (both signer2 & signer1 buy)
-      const signer2PurchaseAmount = getAmount("5");
-      await (
-        await tokenSale
-          .connect(signer2)
-          .purchaseTokenPublicSale(signer2PurchaseAmount)
-      ).wait();
-
-      await (
-        await tokenSale
-          .connect(signer1)
-          .purchaseTokenPublicSale(signer1PurchaseAmount)
-      ).wait(); // Signer1 also buys in public sale
-
-      const [investor2Record, investor1Record2] = await Promise.all([
-        tokenSale.investors(signer2.address),
-        tokenSale.investors(signer1.address),
-      ]);
-
-      await verifyTokenSaleData(
-        tokenSale,
-        erc20,
-        signer1PurchaseAmount
-          .add(signer1PurchaseAmount)
-          .add(signer2PurchaseAmount),
-        signer1PurchaseAmount,
-        signer2PurchaseAmount.add(signer1PurchaseAmount)
-      );
-      verifyInvestorAmounts(
-        investor2Record,
-        signer2PurchaseAmount,
-        0,
-        signer2PurchaseAmount
-      );
-      verifyInvestorAmounts(
-        investor1Record2,
-        signer1PurchaseAmount.add(signer1PurchaseAmount),
-        signer1PurchaseAmount,
-        signer1PurchaseAmount
-      );
-    });
-  });
-
   describe("purchaseTokenWhitelistSale controlled by configureTokenSale", () => {
     beforeEach(async () => {
       await Promise.all([
         (await configureTokenSale(tokenSale, configureTokenSaleParams)).wait(),
-        (
-          await tokenSale.registerInvestors(
-            [signer1.address, signer2.address],
-            [0, 1]
-          )
-        ).wait(),
+        (await tokenSale.registerInvestors([signer1.address], [1])).wait(),
       ]);
     });
 
@@ -1082,64 +622,6 @@ describe("TokenSale", () => {
     });
   });
 
-  describe("purchaseTokenPublicSale controlled by configureTokenSale", () => {
-    let configParams: ConfigureTokenSaleParams;
-
-    beforeEach(async () => {
-      const now = await getNow();
-
-      configParams = {
-        ...configureTokenSaleParams,
-        whitelistSaleTimeFrame: {
-          startTime: now - 3600 * 2,
-          endTime: now - 3600 * 1,
-        },
-        publicSaleTimeFrame: {
-          startTime: now,
-          endTime: now + 3600 * 1,
-        },
-      };
-
-      await Promise.all([
-        (await configureTokenSale(tokenSale, configParams)).wait(),
-        (
-          await tokenSale.registerInvestors(
-            [signer1.address, signer2.address],
-            [0, 1]
-          )
-        ).wait(),
-      ]);
-    });
-
-    it("should revert if not within time frame", async () => {
-      const now = await getNow();
-
-      await (
-        await configureTokenSale(tokenSale, configParams, {
-          publicSaleTimeFrame: {
-            startTime: now - 3600 * 0.5,
-            endTime: now - 3600 * 0.4,
-          },
-        })
-      ).wait();
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not in public sale time");
-
-      await (
-        await configureTokenSale(tokenSale, configParams, {
-          publicSaleTimeFrame: {
-            startTime: now + 3600 * 1,
-            endTime: now + 3600 * 2,
-          },
-        })
-      ).wait();
-      expect(
-        tokenSale.connect(signer1).purchaseTokenPublicSale(getAmount("5"))
-      ).to.be.revertedWith("TokenSale: not in public sale time");
-    });
-  });
-
   describe("finalize", () => {
     beforeEach(async () => {
       const balance = await erc20.balanceOf(owner.address);
@@ -1166,7 +648,7 @@ describe("TokenSale", () => {
       expect(await erc20.balanceOf(admin.address)).to.equal(balanceOfTokenSale);
     });
 
-    it("should be able to finalize when public sale has ended", async () => {
+    it("should be able to finalize when whitelist sale has ended", async () => {
       await Promise.all([
         (
           await tokenSale
@@ -1174,7 +656,7 @@ describe("TokenSale", () => {
             .purchaseTokenWhitelistSale(getAmount("5"))
         ).wait(),
         increaseTime(
-          configureTokenSaleParams.publicSaleTimeFrame.endTime -
+          configureTokenSaleParams.whitelistSaleTimeFrame.endTime -
             configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
             1
         ),
@@ -1265,10 +747,6 @@ describe("TokenSale", () => {
       const investorBefore = await tokenSale.investors(signer1.address);
 
       expect(investorBefore.totalInvestment).to.equal(totalInvestment);
-      expect(investorBefore.whitelistSaleTotalInvestment).to.equal(
-        totalInvestment
-      );
-      expect(investorBefore.publicSaleTotalInvestment).to.equal(0);
       expect(investorBefore.whitelistPurchaseLevel).to.equal(1);
 
       await (
@@ -1280,12 +758,6 @@ describe("TokenSale", () => {
       const investorAfter = await tokenSale.investors(signer2.address);
       expect(investorAfter.totalInvestment).to.equal(
         investorBefore.totalInvestment
-      );
-      expect(investorAfter.whitelistSaleTotalInvestment).to.equal(
-        investorBefore.whitelistSaleTotalInvestment
-      );
-      expect(investorAfter.publicSaleTotalInvestment).to.equal(
-        investorBefore.publicSaleTotalInvestment
       );
       expect(investorAfter.whitelistPurchaseLevel).to.equal(
         investorBefore.whitelistPurchaseLevel
@@ -1299,7 +771,7 @@ describe("TokenSale", () => {
 
     it("should revert if token sale has already been finalized", async () => {
       await increaseTime(
-        configureTokenSaleParams.publicSaleTimeFrame.endTime -
+        configureTokenSaleParams.whitelistSaleTimeFrame.endTime -
           configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
           1
       );
@@ -1380,7 +852,7 @@ describe("TokenSale", () => {
         (await erc20.transfer(signer4.address, balanceEach)).wait(),
         await tokenSale.registerInvestors(
           [signer1.address, signer2.address, signer3.address, signer4.address],
-          [1, 2, 0, 0]
+          [1, 2, 3, 4]
         ),
       ]);
 
@@ -1395,17 +867,17 @@ describe("TokenSale", () => {
             .connect(signer2)
             .purchaseTokenWhitelistSale(signer2InvestmentAmount)
         ).wait(),
+        (
+          await tokenSale
+            .connect(signer3)
+            .purchaseTokenWhitelistSale(signer3InvestmentAmount)
+        ).wait(),
         increaseTime(
-          configureTokenSaleParams.publicSaleTimeFrame.startTime -
+          configureTokenSaleParams.whitelistSaleTimeFrame.startTime -
             configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
             1
         ),
       ]);
-      await (
-        await tokenSale
-          .connect(signer3)
-          .purchaseTokenPublicSale(signer3InvestmentAmount)
-      ).wait();
     });
 
     it("should be able to refund all correctly", async () => {

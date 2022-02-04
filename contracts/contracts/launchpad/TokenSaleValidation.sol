@@ -21,7 +21,9 @@ library TokenSaleValidation {
     uint256 maxLevel
   ) internal pure returns (bool) {
     for (uint256 i; i < whitelistPurchaseLevels.length; ++i) {
-      if (whitelistPurchaseLevels[i] > maxLevel) {
+      if (
+        whitelistPurchaseLevels[i] == 0 || whitelistPurchaseLevels[i] > maxLevel
+      ) {
         return false;
       }
     }

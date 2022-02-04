@@ -18,9 +18,7 @@ contract TokenSaleFactory {
     address _admin,
     uint256 _hardcap,
     TokenSale.TimeFrame calldata _whitelistSaleTimeFrame,
-    TokenSale.TimeFrame calldata _publicSaleTimeFrame,
     uint256[] calldata _purchaseLevels,
-    uint256 _publicSalePurchaseCap,
     address _purchaseToken
   ) public returns (address) {
     require(
@@ -35,9 +33,7 @@ contract TokenSaleFactory {
       _admin,
       _hardcap,
       _whitelistSaleTimeFrame,
-      _publicSaleTimeFrame,
       _purchaseLevels,
-      _publicSalePurchaseCap,
       _purchaseToken
     );
 

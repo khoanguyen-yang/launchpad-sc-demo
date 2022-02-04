@@ -42,12 +42,7 @@ export type CreateTokenSaleParams = {
     startTime: number;
     endTime: number;
   };
-  publicSaleTimeFrame: {
-    startTime: number;
-    endTime: number;
-  };
   purchaseLevels: BigNumberish[];
-  publicSalePurchaseCap: BigNumberish;
   purchaseToken: string;
 };
 
@@ -60,12 +55,7 @@ export type OverrideCreateTokenSaleParams = {
     startTime: number;
     endTime: number;
   };
-  publicSaleTimeFrame?: {
-    startTime: number;
-    endTime: number;
-  };
   purchaseLevels?: BigNumberish[];
-  publicSalePurchaseCap?: BigNumberish;
   purchaseToken?: string;
 };
 
@@ -81,9 +71,7 @@ export const createTokenSale = (
     params.admin,
     params.hardcap,
     params.whitelistSaleTimeFrame,
-    params.publicSaleTimeFrame,
     params.purchaseLevels,
-    params.publicSalePurchaseCap,
     params.purchaseToken
   );
 };
@@ -94,12 +82,7 @@ export type ConfigureTokenSaleParams = {
     startTime: number;
     endTime: number;
   };
-  publicSaleTimeFrame: {
-    startTime: number;
-    endTime: number;
-  };
   purchaseLevels: BigNumberish[];
-  publicSalePurchaseCap: BigNumberish;
   purchaseToken: string;
   status: number;
 };
@@ -110,12 +93,7 @@ export type OverrideConfigureTokenSaleParams = {
     startTime: number;
     endTime: number;
   };
-  publicSaleTimeFrame?: {
-    startTime: number;
-    endTime: number;
-  };
   purchaseLevels?: BigNumberish[];
-  publicSalePurchaseCap?: BigNumberish;
   purchaseToken?: string;
   status?: number;
 };
@@ -133,9 +111,7 @@ export const configureTokenSale = (
   return tokenSale.configureTokenSale(
     params.hardcap,
     params.whitelistSaleTimeFrame,
-    params.publicSaleTimeFrame,
     params.purchaseLevels,
-    params.publicSalePurchaseCap,
     params.status
   );
 };
@@ -143,9 +119,7 @@ export const configureTokenSale = (
 export const verifyTokenSaleData = async (
   tokenSale: TokenSale,
   erc20: ERC20,
-  expectedTotalSaleAmount: BigNumberish,
-  expectedTotalWhitelistSaleAmount: BigNumberish,
-  expectedTotalPublicSaleAmount: BigNumberish
+  expectedTotalSaleAmount: BigNumberish
 ) => {
   const [tokenSaleBalance, tokenSaleData] = await Promise.all([
     erc20.balanceOf(tokenSale.address),
@@ -153,25 +127,11 @@ export const verifyTokenSaleData = async (
   ]);
   expect(tokenSaleBalance).to.equal(tokenSaleData.totalSaleAmount_);
   expect(tokenSaleData.totalSaleAmount_).to.equal(expectedTotalSaleAmount);
-  expect(tokenSaleData.totalWhitelistSaleAmount_).to.equal(
-    expectedTotalWhitelistSaleAmount
-  );
-  expect(tokenSaleData.totalPublicSaleAmount_).to.equal(
-    expectedTotalPublicSaleAmount
-  );
 };
 
 export const verifyInvestorAmounts = (
   investor: any,
-  expectedTotalInvestment: BigNumberish,
-  expectedWhitelistSaleTotalInvestment: BigNumberish,
-  expectedPublicSaleTotalInvestment: BigNumberish
+  expectedTotalInvestment: BigNumberish
 ) => {
   expect(investor.totalInvestment).to.equal(expectedTotalInvestment);
-  expect(investor.whitelistSaleTotalInvestment).to.equal(
-    expectedWhitelistSaleTotalInvestment
-  );
-  expect(investor.publicSaleTotalInvestment).to.equal(
-    expectedPublicSaleTotalInvestment
-  );
 };
