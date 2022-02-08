@@ -528,11 +528,12 @@ describe("TokenSale", () => {
     });
 
     it("should emit event on successful purchase", async () => {
+      const amount = getAmount("5");
       expect(
         tokenSale.connect(signer1).purchaseTokenWhitelistSale(getAmount("5"))
       )
         .to.emit(tokenSale, "NewInvestment")
-        .withArgs(signer1.address, getAmount("5"));
+        .withArgs(signer1.address, amount, amount);
     });
 
     it("should revert if token sale is not active", async () => {

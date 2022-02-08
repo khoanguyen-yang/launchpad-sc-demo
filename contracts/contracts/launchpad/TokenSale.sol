@@ -15,7 +15,11 @@ contract TokenSale is Initializable, Ownable {
   using SafeMath for uint256;
 
   // Emitted event for new investment
-  event NewInvestment(address indexed investor, uint256 amount);
+  event NewInvestment(
+    address indexed investor,
+    uint256 amount,
+    uint256 totalSaleAmount
+  );
 
   // Emitted event for token sale finalization (fund is transfered to admin wallet)
   event Finalized(address admin, uint256 amount);
@@ -286,7 +290,7 @@ contract TokenSale is Initializable, Ownable {
       address(this),
       investmentAmount
     );
-    emit NewInvestment(investor.investor, investmentAmount);
+    emit NewInvestment(investor.investor, investmentAmount, totalSaleAmount);
   }
 
   /// @notice Finalize token sale: send all funds to admin's wallet
