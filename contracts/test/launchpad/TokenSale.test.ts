@@ -249,7 +249,16 @@ describe("TokenSale", () => {
   describe("registerInvestors", () => {
     beforeEach(async () => {
       await (
-        await configureTokenSale(tokenSale, configureTokenSaleParams)
+        await configureTokenSale(tokenSale, configureTokenSaleParams, {
+          whitelistSaleTimeFrame: {
+            startTime:
+              configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
+              3600 * 1,
+            endTime:
+              configureTokenSaleParams.whitelistSaleTimeFrame.startTime +
+              3600 * 2,
+          },
+        })
       ).wait();
     });
 
@@ -291,7 +300,7 @@ describe("TokenSale", () => {
       );
     });
 
-    it("should override old data when register investor", async () => {
+    it("should override old data when register investor once sale has not started", async () => {
       const investor = getRandomAddress();
       await (await tokenSale.registerInvestors([investor], [1])).wait();
 
@@ -302,6 +311,38 @@ describe("TokenSale", () => {
       const investorAfter = await tokenSale.investors(investor);
       expect(investorAfter.whitelistPurchaseLevel).to.equal(2);
 
+      expect(await tokenSale.investorCount()).to.equal(1);
+    });
+
+    it("should not override old data once sale has started and investor is existed", async () => {
+      await (
+        await configureTokenSale(tokenSale, configureTokenSaleParams)
+      ).wait();
+
+      const investor = getRandomAddress();
+      await (await tokenSale.registerInvestors([investor], [1])).wait();
+
+      const investorBefore = await tokenSale.investors(investor);
+      expect(investorBefore.whitelistPurchaseLevel).to.equal(1);
+
+      await (await tokenSale.registerInvestors([investor], [2])).wait();
+      const investorAfter = await tokenSale.investors(investor);
+      expect(investorAfter.whitelistPurchaseLevel).to.equal(1);
+
+      expect(await tokenSale.investorCount()).to.equal(1);
+    });
+
+    it("should be able to register investor once sale has started but investor is not existed", async () => {
+      await (
+        await configureTokenSale(tokenSale, configureTokenSaleParams)
+      ).wait();
+
+      const investor = getRandomAddress();
+      await (await tokenSale.registerInvestors([investor], [1])).wait();
+
+      const investorBefore = await tokenSale.investors(investor);
+      expect(investorBefore.investor).to.equal(investor);
+      expect(investorBefore.whitelistPurchaseLevel).to.equal(1);
       expect(await tokenSale.investorCount()).to.equal(1);
     });
 
@@ -342,7 +383,7 @@ describe("TokenSale", () => {
 
   describe("purchaseTokenWhitelistSale", () => {
     beforeEach(async () => {
-      const balanceEach = (await erc20.balanceOf(owner.address)).div(2);
+      const balanceEach = (await erc20.balanceOf(owner.address)).div(4);
       await Promise.all([
         (
           await erc20.connect(signer1).approve(tokenSale.address, balanceEach)
@@ -352,10 +393,14 @@ describe("TokenSale", () => {
           await erc20.connect(signer2).approve(tokenSale.address, balanceEach)
         ).wait(),
         (await erc20.transfer(signer2.address, balanceEach)).wait(),
+        (
+          await erc20.connect(signer3).approve(tokenSale.address, balanceEach)
+        ).wait(),
+        (await erc20.transfer(signer3.address, balanceEach)).wait(),
         (await configureTokenSale(tokenSale, configureTokenSaleParams)).wait(),
         await tokenSale.registerInvestors(
-          [signer1.address, signer2.address],
-          [3, 1]
+          [signer1.address, signer2.address, signer3.address],
+          [3, 1, 2]
         ),
       ]);
     });
@@ -456,28 +501,25 @@ describe("TokenSale", () => {
     });
 
     it("should be able to buy remaining of the combination of personal and hard caps", async () => {
-      await Promise.all([
-        (
-          await configureTokenSale(tokenSale, configureTokenSaleParams, {
-            hardcap: getAmount("15"),
-          })
-        ).wait(),
-        (await tokenSale.registerInvestors([signer1.address], [2])).wait(),
-      ]);
+      (
+        await configureTokenSale(tokenSale, configureTokenSaleParams, {
+          hardcap: getAmount("15"),
+        })
+      ).wait();
 
       await (
         await tokenSale
-          .connect(signer1)
+          .connect(signer3)
           .purchaseTokenWhitelistSale(getAmount("5"))
       ).wait();
       await (
         await tokenSale
-          .connect(signer1)
+          .connect(signer3)
           .purchaseTokenWhitelistSale(getAmount("10"))
       ).wait();
 
       const [investorRecord] = await Promise.all([
-        tokenSale.investors(signer1.address),
+        tokenSale.investors(signer3.address),
       ]);
       const expectedAmount = getAmount("10");
 

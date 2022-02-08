@@ -187,7 +187,7 @@ contract TokenSale is Initializable, Ownable {
   }
 
   /// @notice Register (whitelist) investors
-  /// @dev New data will override old ones if existed
+  /// @dev New data will override old ones only when sale has not started
   function registerInvestors(
     address[] calldata _investors,
     uint8[] calldata _whitelistPurchaseLevels
@@ -210,16 +210,22 @@ contract TokenSale is Initializable, Ownable {
       "TokenSale: invalid whitelist purchase level"
     );
 
+    bool hasSaleStarted = block.timestamp >= whitelistSaleTimeFrame.startTime;
+
     for (uint256 i; i < _investors.length; ++i) {
-      if (investors[_investors[i]].investor == address(0)) {
+      bool investorExisted = investors[_investors[i]].investor != address(0);
+
+      if (!investorExisted) {
         investorAddresses.push(_investors[i]);
       }
 
-      investors[_investors[i]] = Investor(
-        _investors[i],
-        0,
-        _whitelistPurchaseLevels[i]
-      );
+      if (!hasSaleStarted || !investorExisted) {
+        investors[_investors[i]] = Investor(
+          _investors[i],
+          0,
+          _whitelistPurchaseLevels[i]
+        );
+      }
     }
   }
 
