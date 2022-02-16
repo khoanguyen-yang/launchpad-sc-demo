@@ -712,6 +712,12 @@ describe("TokenSale", () => {
       expect(await erc20.balanceOf(admin.address)).to.equal(balanceOfTokenSale);
     });
 
+    it("should revert if none condition is met", async () => {
+      expect(tokenSale.finalize()).to.be.revertedWith(
+        "TokenSale: can not finalize"
+      );
+    });
+
     it("should only be able to finalize once", async () => {
       await (
         await tokenSale
@@ -966,6 +972,7 @@ describe("TokenSale", () => {
       );
       expect(tokenSaleContractBalanceBefore).to.equal(totalInvestment);
       expect(nextRefundIdxBefore).to.equal(0);
+      expect(await tokenSale.status()).to.equal(1);
 
       await (await tokenSale.connect(admin).refundAll()).wait();
 
@@ -1003,6 +1010,10 @@ describe("TokenSale", () => {
       expect(signer4BalanceAfter).to.equal(balanceEach);
       expect(tokenSaleContractBalanceAfter).to.equal(0);
       expect(nextRefundIdxAfter).to.equal(4);
+      expect(await tokenSale.status()).to.equal(0);
+
+      // The next refund wont change the status
+      await (await tokenSale.connect(admin).refundAll()).wait();
       expect(await tokenSale.status()).to.equal(0);
     });
 
